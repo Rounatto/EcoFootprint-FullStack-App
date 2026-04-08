@@ -1,3 +1,4 @@
+/* App color palette */
 :root {
   --primary: #2a9d8f;
   --secondary: #264653;
@@ -7,6 +8,7 @@
   --danger: #e76f51;
 }
 
+/* Global reset and default typography */
 * {
   margin: 0;
   padding: 0;
@@ -14,12 +16,14 @@
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+/* Page background and text color */
 body {
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   color: var(--dark);
   min-height: 100vh;
 }
 
+/* Main layout wrapper */
 .container {
   max-width: 1200px;
   margin: 0 auto;
@@ -343,6 +347,7 @@ nav a.active {
   flex-wrap: wrap;
 }
 
+/* Responsive behavior for tablet and mobile */
 @media (max-width: 992px) {
   .summary-cards .summary-card {
     flex: 1 1 calc(50% - 10px);

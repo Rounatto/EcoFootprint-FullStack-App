@@ -1,14 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Basic document metadata -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EcoFootprint - Carbon Emission Tracker</title>
-    <link rel="stylesheet" href="../static/EcoFootprint.css">
+    <!-- App styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='EcoFootprint.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+    <!-- Main app container -->
     <div class="container">
         <header>
             <div class="logo">
@@ -93,7 +96,7 @@
         </div>
     </div>
     
-    <!-- Add Activity Modal -->
+    <!-- Modal for adding a new activity -->
     <div class="modal" id="activity-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -133,7 +136,7 @@
         </div>
     </div>
 
-    <!-- Add Goal Modal -->
+    <!-- Modal for creating a new goal -->
     <div class="modal" id="goal-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -171,6 +174,7 @@
         </div>
     </div>
 
-    <script src="../static/EcoFootprint.js"></script>
+    <!-- App behavior -->
+    <script src="{{ url_for('static', filename='EcoFootprint.js') }}"></script>
 </body>
 </html>

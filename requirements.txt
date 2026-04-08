@@ -1,0 +1,8 @@
+# Web framework
+Flask
+
+# Environment variables loader
+python-dotenv
+
+# Supabase Python SDK
+supabase
