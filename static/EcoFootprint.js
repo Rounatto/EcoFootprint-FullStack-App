@@ -200,6 +200,9 @@ function makeLabel(text) {
     return clean.charAt(0).toUpperCase() + clean.slice(1);
 }
 
+// ==========================================
+// NOUVELLE FONCTION CONNECTÉE À FLASK
+// ==========================================
 function addActivity() {
     var type = activityType.value;
     var detail = activityDetail.value;
@@ -213,8 +216,8 @@ function addActivity() {
     var factor = emissionFactors[detail] || 0;
     var emission = amount * factor;
 
-    var activity = {
-        id: Date.now(),
+    // 1. Préparation des données
+    var activityData = {
         type: type,
         detail: detail,
         amount: amount,
@@ -222,11 +225,36 @@ function addActivity() {
         emission: emission
     };
 
-    activities.unshift(activity);
-    localStorage.setItem('ecoActivitiesBasic', JSON.stringify(activities));
-
-    renderAll();
-    closeActivityModal();
+    // 2. Envoi au serveur Flask via API
+    fetch('/api/add-activity', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(activityData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === "success") {
+            console.log("Succès: Sauvegardé dans Supabase !");
+            
+            // Mise à jour visuelle
+            activityData.id = Date.now(); 
+            activities.unshift(activityData);
+            
+            // Sauvegarde locale temporaire
+            localStorage.setItem('ecoActivitiesBasic', JSON.stringify(activities));
+            
+            renderAll();
+            closeActivityModal();
+        } else {
+            alert("Erreur lors de la sauvegarde côté serveur.");
+            console.error(data.message);
+        }
+    })
+    .catch(error => {
+        console.error("Erreur réseau:", error);
+    });
 }
 
 function addGoal() {
