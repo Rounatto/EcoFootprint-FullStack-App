@@ -9,7 +9,11 @@ app = Flask(__name__)
 
 # Accept both standard and legacy variable names.
 url = os.environ.get("SUPABASE_URL") or os.environ.get("Supabase_URL")
-key = os.environ.get("SUPABASE_KEY") or os.environ.get("Supabase_key")
+key = (
+    os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+    or os.environ.get("SUPABASE_KEY")
+    or os.environ.get("Supabase_key")
+)
 supabase: Client | None = create_client(url, key) if url and key else None
 
 @app.route('/')
@@ -20,12 +24,6 @@ def home():
 @app.route('/api/add-activity', methods=['POST'])
 def add_activity():
     # Save one activity row into Supabase.
-    if supabase is None:
-        return jsonify({
-            "status": "error",
-            "message": "Supabase is not configured. Check SUPABASE_URL and SUPABASE_KEY in .env"
-        }), 500
-
     try:
         data = request.get_json(silent=True) or {}
         if not isinstance(data, dict) or not data:
@@ -34,16 +32,29 @@ def add_activity():
                 "message": "Invalid or empty JSON payload"
             }), 400
 
+        if supabase is None:
+            return jsonify({
+                "status": "success",
+                "message": "Supabase is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env"
+            }), 500
+
         response = supabase.table('activities').insert(data).execute()
         return jsonify({
             "status": "success",
             "message": "Activite sauvegardee avec succes",
-            "data": response.data
+            "data": response.data,
+            "storage": "supabase"
         }), 201
     except Exception as e:
+        error_message = str(e)
+        if "row-level security" in error_message.lower() or "42501" in error_message:
+            error_message = (
+                "Supabase blocked the insert because Row Level Security is enabled. "
+                "Add an INSERT policy for public.activities or use SUPABASE_SERVICE_ROLE_KEY."
+            )
         return jsonify({
             "status": "error",
-            "message": str(e)
+            "message": error_message
         }), 400
 
 

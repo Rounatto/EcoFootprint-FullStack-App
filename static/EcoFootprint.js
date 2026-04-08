@@ -236,8 +236,6 @@ function addActivity() {
     .then(response => response.json())
     .then(data => {
         if (data.status === "success") {
-            console.log("Succès: Sauvegardé dans Supabase !");
-            
             // Mise à jour visuelle
             activityData.id = Date.now(); 
             activities.unshift(activityData);
@@ -248,12 +246,13 @@ function addActivity() {
             renderAll();
             closeActivityModal();
         } else {
-            alert("Erreur lors de la sauvegarde côté serveur.");
+            alert(data.message || "Erreur lors de la sauvegarde.");
             console.error(data.message);
         }
     })
     .catch(error => {
         console.error("Erreur réseau:", error);
+        alert("Erreur reseau ou serveur Flask inaccessible. Verifie que le backend tourne bien.");
     });
 }
 
