@@ -105,33 +105,33 @@ python EcoFootprint.py
 
 ## Captures d'ecran
 
-### Dashboard et carte
+### 1. Dashboard et carte
 ![Dashboard principal](static/images/dashboard1.png)
 ![Dashboard secondaire](static/images/dashboard2.png)
 ![Carte et dashboard](static/images/map1.png)
 ![Carte interactive](static/images/map2.png)
 
-### Historique et emissions
+### 2. Premiere activité et historique
+![Ajout activite reussi](static/images/adedRowSuccessful.png)
 ![Historique charge](static/images/HistoriqueChargée.png)
 ![Emission breakdown](static/images/adedEmissionBreakdown.png)
 ![Emission breakdown apres activite energie](static/images/afterAddingEnergyActivity.png)
-![Ajout activite reussi](static/images/adedRowSuccessful.png)
 
-### Suppression d'activite
+### 3. Objectifs
+![Page objectifs](static/images/pageGoals.png)
+![Formulaire nouvel objectif](static/images/setNewGoal.png)
+![Objectif ajoute](static/images/goalAded.png)
+![Table goal vide](static/images/tableGoalVide.png)
+![Relation avec table goal](static/images/relationAvecTableGoal.png)
+![Supabase objectifs](static/images/dbGoalAded.png)
+
+### 4. Suppression d'activite
 ![Avant suppression](static/images/avantSupprimerPork.png)
 ![Message de suppression](static/images/msgSupprimerPork.png)
 ![Apres suppression](static/images/apresSupprimerPork.png)
 ![Database apres suppression](static/images/dbApresSuppression.png)
 
-### Objectifs
-![Page objectifs](static/images/pageGoals.png)
-![Formulaire nouvel objectif](static/images/setNewGoal.png)
-![Objectif ajoute](static/images/goalAded.png)
-![Supabase objectifs](static/images/dbGoalAded.png)
-![Table goal vide](static/images/tableGoalVide.png)
-![Relation avec table goal](static/images/relationAvecTableGoal.png)
-
-### Rendu final
+### 5. Rendu final
 ![Rendu final 1](static/images/renduFinal1.png)
 ![Rendu final 2](static/images/renduFinal2.png)
 
