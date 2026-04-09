@@ -25,6 +25,8 @@ const activityModal = document.getElementById('activity-modal');
 const activityForm = document.getElementById('activity-form');
 const activityType = document.getElementById('activity-type');
 const activityDetail = document.getElementById('activity-detail');
+const amountInput = document.getElementById('amount');
+const amountHint = document.getElementById('amount-hint');
 const activitiesList = document.getElementById('activities-list');
 const totalFootprintEl = document.getElementById('total-footprint');
 const energyUsageEl = document.getElementById('energy-usage');
@@ -205,6 +207,7 @@ function setupEvents() {
     document.getElementById('close-goal-btn').onclick = () => document.getElementById('goal-modal').style.display = 'none';
 
     activityType.onchange = updateDetailOptions;
+    activityDetail.onchange = updateAmountHint;
     activityForm.onsubmit = (e) => { e.preventDefault(); addActivity(); };
     document.getElementById('goal-form').onsubmit = (e) => { e.preventDefault(); addGoal(); };
 
@@ -222,11 +225,24 @@ function setupEvents() {
             if(target === 'dashboard' && map) setTimeout(() => map.invalidateSize(), 200);
         };
     });
+
+    updateAmountHint();
 }
 
 function updateDetailOptions() {
     const opts = detailsByType[activityType.value] || [];
     activityDetail.innerHTML = opts.map(o => `<option value="${o}">${o}</option>`).join('');
+    updateAmountHint();
+}
+
+function updateAmountHint() {
+    if (!amountInput || !amountHint) return;
+
+    const unit = units[activityType.value] || 'units';
+    const detailLabel = activityDetail.value || 'the selected detail';
+
+    amountInput.placeholder = `Enter amount in ${unit}`;
+    amountHint.textContent = `For ${detailLabel}, enter the quantity in ${unit}.`;
 }
 
 function setDefaultDates() {
