@@ -78,8 +78,53 @@ def get_activities():
         
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 400
+@app.route('/api/delete-activity/<int:activity_id>', methods=['DELETE'])
+def delete_activity(activity_id):
+    try:
+        if supabase is None:
+            return jsonify({"status": "error", "message": "Supabase non configuré"}), 500
 
+        # Delete the activity row by its numeric id.
+        response = supabase.table('activities').delete().eq('id', activity_id).execute()
 
+        if not response.data:
+            return jsonify({
+                "status": "error",
+                "message": "Aucune activite trouvee pour cet ID"
+            }), 404
+
+        return jsonify({
+            "status": "success",
+            "message": "Activité supprimée avec succès"
+        }), 200
+
+    except Exception as e:
+        error_message = str(e)
+        if "row-level security" in error_message.lower() or "42501" in error_message:
+            error_message = (
+                "Supabase blocked the delete because Row Level Security is enabled. "
+                "Add a DELETE policy for public.activities or use SUPABASE_SERVICE_ROLE_KEY."
+            )
+        return jsonify({"status": "error", "message": error_message}), 400
+@app.route('/api/add-goal', methods=['POST'])
+def add_goal():
+    try:
+        data = request.get_json(silent=True)
+        if supabase is None:
+            return jsonify({"status": "error", "message": "Supabase non configuré"}), 500
+
+        response = supabase.table('goals').insert(data).execute()
+        return jsonify({"status": "success", "data": response.data}), 201
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+@app.route('/api/goals', methods=['GET'])
+def get_goals():
+    try:
+        response = supabase.table('goals').select('*').execute()
+        return jsonify({"status": "success", "data": response.data}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
 if __name__ == '__main__':
     # Run Flask app in development mode.
     app.run(debug=True)

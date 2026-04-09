@@ -43,7 +43,12 @@ with check (true);
 ![Supabase Database](static/images/supabasedb2.png)
 ![Carte Interactive & Dashboard](static/images/map1.png)
 ![Carte Interactive & Dashboard](static/images/map2.png)
-
+![Action Delete](static/images/avantSupprimerPork.png)
+![Action Delete](static/images/msgSupprimerPork.png)
+![Action Delete](static/images/apresSupprimerPork.png)
+![Supabase après suppression](static/images/dbApresSuppression.png)
+![Supabase Nouvelle table goal](static/images/tableGoalVide.png)
+![Supabase Nouvelle Table Relation](static/images/relationAvecTableGoal.png)
 ## 💻 Installation en Local
 Pour faire tourner ce projet sur votre machine :
 

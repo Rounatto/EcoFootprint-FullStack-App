@@ -142,11 +142,14 @@ function renderActivities() {
     activities.forEach(activity => {
         var item = document.createElement('div');
         item.className = 'activity-item';
+        
+        // On ajoute un bouton avec l'ID de l'activité
         item.innerHTML = `
             <span class="activity-date">${formatDate(activity.date)}</span>
             <span class="activity-detail">${activity.type} - ${activity.detail}</span>
             <span class="activity-amount">${activity.amount} ${units[activity.type] || ''}</span>
             <span class="activity-emission">${activity.emission.toFixed(2)} kg CO2</span>
+            <button class="delete-btn" onclick="deleteActivity('${activity.id}')">🗑️</button>
         `;
         activitiesList.appendChild(item);
     });
@@ -205,5 +208,32 @@ function setDefaultDates() {
 function formatDate(v) {
     return new Date(v).toLocaleDateString();
 }
+function deleteActivity(id) {
+    if (!confirm("Voulez-vous vraiment supprimer cette activité ?")) return;
 
+    var numericId = Number(id);
+    if (!Number.isFinite(numericId)) {
+        alert("ID d'activite invalide.");
+        return;
+    }
+
+    // Le facteur va à l'adresse DELETE de Flask
+    fetch(`/api/delete-activity/${numericId}`, {
+        method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === "success") {
+            console.log("Supprimé !");
+            // On recharge la liste depuis Supabase pour que l'écran soit à jour
+            loadActivities(); 
+        } else {
+            alert("Erreur lors de la suppression : " + data.message);
+        }
+    })
+    .catch(error => {
+        console.error("Erreur réseau :", error);
+        alert("Erreur reseau lors de la suppression.");
+    });
+}
 setup();
