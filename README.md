@@ -1,29 +1,61 @@
-# 🌍 EcoFootprint Full-Stack App
+# EcoFootprint Full-Stack App
 
-Une application web interactive permettant aux utilisateurs de calculer, suivre et analyser leur empreinte carbone, avec un accent particulier sur les trajets écologiques.
+EcoFootprint est une application web de suivi d'empreinte carbone. Elle centralise la saisie d'activites, le calcul des emissions, le suivi d'objectifs et la visualisation des donnees dans une interface claire, moderne et orientee portfolio.
 
-## 🚀 Fonctionnalités Principales
-* **Tableau de bord dynamique :** Visualisation des émissions de CO2.
-* **Calculateur de trajets :** Comparaison de l'empreinte carbone selon le moyen de transport.
-* **Historique et Objectifs :** Sauvegarde des données utilisateurs pour un suivi à long terme.
+## Apercu du projet
+- Suivi des activites par categorie: transport, energie, alimentation et achats.
+- Calcul automatique des emissions de CO2.
+- Historique synchronise avec Supabase PostgreSQL.
+- Objectifs environnementaux et conseils eco-responsables.
+- Carte interactive Leaflet pour visualiser et mesurer des distances.
 
-## 🛠️ Tech Stack
-* **Frontend :** HTML5, CSS3 (Variables natives, Flexbox), Vanilla JavaScript, Leaflet.js (Cartographie).
-* **Backend :** Python, Flask.
-* **Base de Données :** PostgreSQL (hébergé sur Supabase).
+## Points forts
+- Interface unifiee avec dashboard, objectifs, conseils et carte.
+- Donnees persistantes via Supabase.
+- Navigation simple et claire pour une demo en entretien ou en soutenance.
+- Galerie d'ecrans documentaire deja preparee pour le README.
 
-## 🔐 Configuration Supabase pour l'ecriture
-Pour que les lignes soient vraiment ajoutees dans `activities`, utilise une cle serveur cote backend ou ajoute une policy RLS d'insertion.
+## Tech Stack
+- Frontend: HTML5, CSS3, Vanilla JavaScript, Leaflet.js
+- Backend: Python, Flask
+- Base de donnees: PostgreSQL via Supabase
+- UI assets: Font Awesome, Chart.js
+
+## Fonctionnalites principales
+### Tableau de bord
+- Cartes de synthese pour les emissions globales, l'energie et le transport.
+- Graphique des emissions.
+- Carte interactive pour visualiser les trajets.
+
+### Gestion des donnees
+- Ajout d'activites avec categorie, detail, quantite et date.
+- Suppression d'activites.
+- Chargement de l'historique depuis la base de donnees.
+
+### Objectifs et conseils
+- Creation d'objectifs de reduction.
+- Consultation de recommandations ecolos.
+
+## Architecture du projet
+- [EcoFootprint.py](EcoFootprint.py): routes Flask et connexion Supabase.
+- [templates/index.html](templates/index.html): structure HTML principale.
+- [static/EcoFootprint.css](static/EcoFootprint.css): styles de l'application.
+- [static/EcoFootprint.js](static/EcoFootprint.js): logique interface, navigation et appels API.
+
+## Configuration Supabase
+Pour que les insertions et suppressions fonctionnent vraiment, il faut une configuration d'ecriture valide.
 
 ### Option recommandee: cle serveur
-Dans `.env`, utilise :
+Utilise une cle serveur cote backend dans `.env`:
+
 ```env
 SUPABASE_URL=ton_url_supabase
 SUPABASE_SERVICE_ROLE_KEY=ta_cle_service_role
 ```
 
-### Option alternative: garder la cle publique et autoriser l'insertion
-Execute ceci dans l'editeur SQL de Supabase :
+### Option alternative: policy RLS
+Si tu gardes une cle publique, ajoute une policy d'insertion et de suppression dans Supabase:
+
 ```sql
 alter table public.activities enable row level security;
 
@@ -32,39 +64,77 @@ on public.activities
 for insert
 to anon, authenticated
 with check (true);
+
+create policy "allow delete activities"
+on public.activities
+for delete
+to anon, authenticated
+using (true);
 ```
 
-## 📸 Aperçu du Projet
-![Dashboard1 EcoFootprint](static/images/dashboard1.png)
-![Dashboard2 EcoFootprint](static/images/dashboard2.png)
-![Base de données Supabase](static/images/supabasedb.png)
-![Preuve d'insertion Supabase](static/images/adedRowSuccessful.png)
-![Dashboard EcoFootprint](static/images/HistoriqueChargée.png)
-![Supabase Database](static/images/supabasedb2.png)
-![Carte Interactive & Dashboard](static/images/map1.png)
-![Carte Interactive & Dashboard](static/images/map2.png)
-![Action Delete](static/images/avantSupprimerPork.png)
-![Action Delete](static/images/msgSupprimerPork.png)
-![Action Delete](static/images/apresSupprimerPork.png)
-![Supabase après suppression](static/images/dbApresSuppression.png)
-![Supabase Nouvelle table goal](static/images/tableGoalVide.png)
-![Supabase Nouvelle Table Relation](static/images/relationAvecTableGoal.png)
-![Page goal aded](static/images/pageGoals.png)
-![set new goal](static/images/setNewGoal.png)
-![goal aded](static/images/goalAded.png)
-![Supabase goal aded](static/images/dbGoalAded.png)
-![Emission braekdown](static/images/adedEmissionBreakdown.png)
-![Emission breakdown after adding energy activity](static/images/afterAddingEnergyActivity.png)
+## Installation locale
+1. Cloner le depot:
 
-## 💻 Installation en Local
-Pour faire tourner ce projet sur votre machine :
+```bash
+git clone https://github.com/Rounatto/EcoFootprint-FullStack-App.git
+```
 
-1. Clonez le dépôt :
-   \`git clone https://github.com/Rounatto/EcoFootprint-FullStack-App.git\`
-2. Installez les dépendances :
-   \`pip install -r requirements.txt\`
-3. Créez un fichier \`.env\` à la racine avec vos clés Supabase :
-   \`SUPABASE_URL=votre_url\`
-   \`SUPABASE_SERVICE_ROLE_KEY=votre_cle_service_role\`
-4. Lancez le serveur Flask :
-   \`python EcoFootprint.py\`
+2. Installer les dependances:
+
+```bash
+pip install -r requirements.txt
+```
+
+3. Configurer le fichier `.env`:
+
+```env
+SUPABASE_URL=votre_url
+SUPABASE_SERVICE_ROLE_KEY=votre_cle_service_role
+```
+
+4. Lancer l'application:
+
+```bash
+python EcoFootprint.py
+```
+
+## API backend
+- `GET /api/activities`: recuperer l'historique des activites.
+- `POST /api/add-activity`: ajouter une activite.
+- `DELETE /api/delete-activity/<id>`: supprimer une activite.
+
+## Captures d'ecran
+
+### Dashboard et carte
+![Dashboard principal](static/images/dashboard1.png)
+![Dashboard secondaire](static/images/dashboard2.png)
+![Carte et dashboard](static/images/map1.png)
+![Carte interactive](static/images/map2.png)
+
+### Historique et emissions
+![Historique charge](static/images/HistoriqueChargée.png)
+![Emission breakdown](static/images/adedEmissionBreakdown.png)
+![Emission breakdown apres activite energie](static/images/afterAddingEnergyActivity.png)
+![Ajout activite reussi](static/images/adedRowSuccessful.png)
+
+### Suppression d'activite
+![Avant suppression](static/images/avantSupprimerPork.png)
+![Message de suppression](static/images/msgSupprimerPork.png)
+![Apres suppression](static/images/apresSupprimerPork.png)
+![Database apres suppression](static/images/dbApresSuppression.png)
+
+### Objectifs
+![Page objectifs](static/images/pageGoals.png)
+![Formulaire nouvel objectif](static/images/setNewGoal.png)
+![Objectif ajoute](static/images/goalAded.png)
+![Supabase objectifs](static/images/dbGoalAded.png)
+![Table goal vide](static/images/tableGoalVide.png)
+![Relation avec table goal](static/images/relationAvecTableGoal.png)
+
+### Rendu final
+![Rendu final 1](static/images/renduFinal1.png)
+![Rendu final 2](static/images/renduFinal2.png)
+
+## Notes
+- Le fichier `.env` ne doit jamais etre pousse sur GitHub.
+- Si tu utilises une cle publique Supabase, assure-toi que les policies RLS autorisent les insertions et suppressions.
