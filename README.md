@@ -41,6 +41,9 @@ with check (true);
 ![Preuve d'insertion Supabase](static/images/adedRowSuccessful.png)
 ![Dashboard EcoFootprint](static/images/HistoriqueChargée.png)
 ![Supabase Database](static/images/supabasedb2.png)
+![Carte Interactive & Dashboard](static/images/map1.png)
+![Carte Interactive & Dashboard](static/images/map2.png)
+
 ## 💻 Installation en Local
 Pour faire tourner ce projet sur votre machine :
 
