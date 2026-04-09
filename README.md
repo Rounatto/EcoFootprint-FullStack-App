@@ -39,6 +39,8 @@ with check (true);
 ![Dashboard2 EcoFootprint](static/images/dashboard2.png)
 ![Base de données Supabase](static/images/supabasedb.png)
 ![Preuve d'insertion Supabase](static/images/adedRowSuccessful.png)
+![Dashboard EcoFootprint](static/images/HistoriqueChargée.png)
+![Supabase Database](static/images/supabasedb2.png)
 ## 💻 Installation en Local
 Pour faire tourner ce projet sur votre machine :
 
