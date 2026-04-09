@@ -1,19 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Basic document metadata -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EcoFootprint - Carbon Emission Tracker</title>
-    <!-- App styles -->
+    <title>EcoFootprint - Full-Stack Tracker</title>
+    
     <link rel="stylesheet" href="{{ url_for('static', filename='EcoFootprint.css') }}">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
-    <!-- Main app container -->
     <div class="container">
         <header>
             <div class="logo">
@@ -22,154 +21,148 @@
             </div>
             <nav>
                 <ul>
-                    <li><a href="#dashboard" class="active">Dashboard</a></li>
-                    <li><a href="#insights" id="insights-link">Insights</a></li>
-                    <li><a href="#goals" id="goals-link">Goals</a></li>
-                    <li><a href="#tips" id="tips-link">Tips</a></li>
+                    <li><a href="#" id="dashboard-link" class="active">Dashboard</a></li>
+                    <li><a href="#" id="goals-link">Goals</a></li>
+                    <li><a href="#" id="tips-link">Tips</a></li>
                 </ul>
             </nav>
         </header>
         
-        <div class="summary-cards">
-            <div class="summary-card card-1">
-                <i class="fas fa-fire"></i>
-                <h3>Carbon Footprint</h3>
-                <div class="amount" id="total-footprint">4.2 t</div>
-            </div>
-            <div class="summary-card card-2">
-                <i class="fas fa-bolt"></i>
-                <h3>Energy Usage</h3>
-                <div class="amount" id="energy-usage">128 kWh</div>
-            </div>
-            <div class="summary-card card-3">
-                <i class="fas fa-car"></i>
-                <h3>Transportation</h3>
-                <div class="amount" id="transport-distance">42 km</div>
-            </div>
-        </div>
-        
-        <div class="dashboard">
-            <div class="card">
-                <h2>Add Activity</h2>
-                <p>Track your carbon emissions</p>
-                <div class="add-icon-wrap">
-                    <i class="fas fa-plus-circle add-icon" id="add-activity-btn"></i>
+        <main>
+            <section id="dashboard">
+                <div class="summary-cards">
+                    <div class="summary-card card-1">
+                        <i class="fas fa-fire"></i>
+                        <h3>Carbon Footprint</h3>
+                        <div class="amount" id="total-footprint">0 kg</div>
+                    </div>
+                    <div class="summary-card card-2">
+                        <i class="fas fa-bolt"></i>
+                        <h3>Energy Usage</h3>
+                        <div class="amount" id="energy-usage">0 kWh</div>
+                    </div>
+                    <div class="summary-card card-3">
+                        <i class="fas fa-car"></i>
+                        <h3>Transportation</h3>
+                        <div class="amount" id="transport-distance">0 km</div>
+                    </div>
                 </div>
-                <p>Click the plus icon to add transportation, energy usage, or consumption data.</p>
-            </div>
-            
-            <div class="card">
-                <h2>Monthly Emissions</h2>
-                <div class="chart-container">
-                    <canvas id="emissions-chart"></canvas>
+                
+                <div class="dashboard-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+                    <div class="card">
+                        <h2>Emissions Breakdown</h2>
+                        <div class="chart-container" style="position: relative; height:250px;">
+                            <canvas id="emissions-chart"></canvas>
+                        </div>
+                        <div style="text-align: center; margin-top: 20px;">
+                            <button class="btn btn-primary" id="add-activity-btn">
+                                <i class="fas fa-plus"></i> Add Activity
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h2>Travel Map</h2>
+                        <p style="font-size: 0.8rem; color: #666;">Click 2 points to calculate distance</p>
+                        <div id="map" style="height: 250px; width: 100%; border-radius: 8px;"></div>
+                    </div>
                 </div>
-                <div id="map" style="height: 300px; width: 100%; border-radius: 8px; margin-bottom: 20px;"></div>
-            </div>
-        </div>
-        
-        <div class="card">
-            <h2>Recent Activities</h2>
-            <div class="activities" id="activities-list">
-                <!-- Activities will be populated by JavaScript -->
-            </div>
-        </div>
-        
-        <div class="recommendations">
-            <h2>Personalized Recommendations</h2>
-            <div id="recommendations-list" class="card recommendation-box">
-                <!-- Recommendations will be populated by JavaScript -->
-            </div>
-        </div>
 
-        <!-- Goals Section -->
-        <div class="card goals-section" id="goals-section" style="display: none;">
-            <h2>Environmental Goals</h2>
-            <div class="goals-container" id="goals-container">
-                <!-- Goals will be populated by JavaScript -->
-            </div>
-            <button class="btn btn-primary" id="add-goal-btn">Add New Goal</button>
-        </div>
+                <div class="card" style="margin-top: 20px;">
+                    <h2>Recent Activities</h2>
+                    <div class="activities" id="activities-list"></div>
+                </div>
+            </section>
 
-        <!-- Tips Section -->
-        <div class="card tips-section" id="tips-section" style="display: none;">
-            <h2>Eco-Friendly Tips</h2>
-            <div class="tips-container" id="tips-container">
-                <!-- Tips will be populated by JavaScript -->
-            </div>
-        </div>
+            <section id="goals" style="display: none;">
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2>Environmental Goals</h2>
+                        <button class="btn btn-primary" id="add-goal-btn">Set New Goal</button>
+                    </div>
+                    <div class="goals-container" id="goals-container">
+                        </div>
+                </div>
+            </section>
+
+            <section id="tips" style="display: none;">
+                <div class="card">
+                    <h2>Eco-Friendly Tips</h2>
+                    <div id="tips-container">
+                        <p>💡 Turn off lights when leaving a room.</p>
+                        <p>🚲 Use a bicycle for short trips.</p>
+                        <p>🥗 Eat more plant-based meals.</p>
+                    </div>
+                </div>
+            </section>
+        </main>
     </div>
     
-    <!-- Modal for adding a new activity -->
-    <div class="modal" id="activity-modal">
-        <div class="modal-content">
-            <div class="modal-header">
+    <div class="modal" id="activity-modal" style="display:none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
+        <div class="modal-content" style="background: white; padding: 20px; border-radius: 8px; width: 400px;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; margin-bottom: 15px;">
                 <h2>Add New Activity</h2>
-                <button class="close-btn">&times;</button>
+                <button class="close-btn" style="border: none; background: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
             </div>
             <form id="activity-form">
-                <div class="form-group">
-                    <label for="activity-type">Activity Type</label>
-                    <select id="activity-type" required>
-                        <option value="">Select a category</option>
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label>Type</label>
+                    <select id="activity-type" style="width: 100%; padding: 8px;" required>
+                        <option value="">Select category</option>
                         <option value="transport">Transportation</option>
                         <option value="energy">Energy Usage</option>
                         <option value="food">Food Consumption</option>
                         <option value="shopping">Shopping</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label for="activity-detail">Activity Detail</label>
-                    <select id="activity-detail" required>
-                        <option value="">Select specific activity</option>
-                    </select>
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label>Detail</label>
+                    <select id="activity-detail" style="width: 100%; padding: 8px;" required></select>
                 </div>
-                <div class="form-group">
-                    <label for="amount">Amount</label>
-                    <input type="number" id="amount" step="0.01" min="0" required placeholder="Enter amount">
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label>Amount</label>
+                    <input type="number" id="amount" step="0.01" style="width: 100%; padding: 8px;" required>
                 </div>
-                <div class="form-group">
-                    <label for="date">Date</label>
-                    <input type="date" id="date" required>
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label>Date</label>
+                    <input type="date" id="date" style="width: 100%; padding: 8px;" required>
                 </div>
-                <div class="form-actions">
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
                     <button type="button" class="btn" id="cancel-btn">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Activity</button>
+                    <button type="submit" class="btn btn-primary">Add</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal for creating a new goal -->
-    <div class="modal" id="goal-modal">
-        <div class="modal-content">
-            <div class="modal-header">
+    <div class="modal" id="goal-modal" style="display:none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
+        <div class="modal-content" style="background: white; padding: 20px; border-radius: 8px; width: 400px;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; margin-bottom: 15px;">
                 <h2>Set New Goal</h2>
-                <button class="close-btn" id="close-goal-btn">&times;</button>
+                <button class="close-btn" id="close-goal-btn" style="border: none; background: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
             </div>
             <form id="goal-form">
-                <div class="form-group">
-                    <label for="goal-type">Goal Type</label>
-                    <select id="goal-type" required>
-                        <option value="">Select goal type</option>
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label>Goal Type</label>
+                    <select id="goal-type" style="width: 100%; padding: 8px;" required>
                         <option value="reduce_emissions">Reduce Emissions</option>
                         <option value="energy_saving">Energy Saving</option>
-                        <option value="transport_change">Transportation Change</option>
-                        <option value="diet_change">Diet Change</option>
+                        <option value="transport_change">Transport Change</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label for="goal-target">Target (kg CO2)</label>
-                    <input type="number" id="goal-target" step="0.1" min="0" required placeholder="Enter target reduction">
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label>Target (kg CO2)</label>
+                    <input type="number" id="goal-target" style="width: 100%; padding: 8px;" required>
                 </div>
-                <div class="form-group">
-                    <label for="goal-deadline">Deadline</label>
-                    <input type="date" id="goal-deadline" required>
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label>Deadline</label>
+                    <input type="date" id="goal-deadline" style="width: 100%; padding: 8px;" required>
                 </div>
-                <div class="form-group">
-                    <label for="goal-description">Description</label>
-                    <textarea id="goal-description" required placeholder="Describe your goal"></textarea>
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label>Description</label>
+                    <textarea id="goal-description" style="width: 100%; padding: 8px;" required></textarea>
                 </div>
-                <div class="form-actions">
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
                     <button type="button" class="btn" id="cancel-goal-btn">Cancel</button>
                     <button type="submit" class="btn btn-primary">Set Goal</button>
                 </div>
@@ -177,7 +170,6 @@
         </div>
     </div>
 
-    <!-- App behavior -->
     <script src="{{ url_for('static', filename='EcoFootprint.js') }}"></script>
 </body>
 </html>

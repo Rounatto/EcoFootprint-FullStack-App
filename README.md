@@ -49,6 +49,11 @@ with check (true);
 ![Supabase après suppression](static/images/dbApresSuppression.png)
 ![Supabase Nouvelle table goal](static/images/tableGoalVide.png)
 ![Supabase Nouvelle Table Relation](static/images/relationAvecTableGoal.png)
+![Page goal aded](static/images/pageGoals.png)
+![set new goal](static/images/setNewGoal.png)
+![goal aded](static/images/goalAded.png)
+![Supabase goal aded](static/images/dbGoalAded.png)
+
 ## 💻 Installation en Local
 Pour faire tourner ce projet sur votre machine :
 
