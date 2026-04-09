@@ -53,6 +53,8 @@ with check (true);
 ![set new goal](static/images/setNewGoal.png)
 ![goal aded](static/images/goalAded.png)
 ![Supabase goal aded](static/images/dbGoalAded.png)
+![Emission braekdown](static/images/adedEmissionBreakdown.png)
+![Emission breakdown after adding energy activity](static/images/afterAddingEnergyActivity.png)
 
 ## 💻 Installation en Local
 Pour faire tourner ce projet sur votre machine :
