@@ -211,7 +211,12 @@ function setupEvents() {
     document.querySelectorAll('nav a').forEach(link => {
         link.onclick = (e) => {
             e.preventDefault();
-            const target = e.target.id.replace('-link', '');
+            const clickedLink = e.currentTarget;
+            const target = clickedLink.id.replace('-link', '');
+
+            document.querySelectorAll('nav a').forEach(navLink => navLink.classList.remove('active'));
+            clickedLink.classList.add('active');
+
             document.querySelectorAll('main > section').forEach(s => s.style.display = 'none');
             document.getElementById(target).style.display = 'block';
             if(target === 'dashboard' && map) setTimeout(() => map.invalidateSize(), 200);
