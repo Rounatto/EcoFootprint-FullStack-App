@@ -1,3 +1,4 @@
+// --- CONFIGURATION ---
 var emissionFactors = {
     car: 0.24, bus: 0.1, train: 0.06, bicycle: 0, motorcycle: 0.12,
     electricity: 0.52, natural_gas: 2.0, heating_oil: 2.68,
@@ -13,76 +14,90 @@ var detailsByType = {
     shopping: ['clothing', 'electronics', 'furniture', 'plastic']
 };
 
-var activities = []; // On commence avec un tableau vide, on va le remplir avec Supabase
+// --- VARIABLES GLOBALES ---
+var activities = [];
 var goals = JSON.parse(localStorage.getItem('ecoGoalsBasic')) || [];
+var map;
+var markers = [];
 
+// --- ELEMENTS DOM ---
 var activityModal = document.getElementById('activity-modal');
 var activityForm = document.getElementById('activity-form');
 var activityType = document.getElementById('activity-type');
 var activityDetail = document.getElementById('activity-detail');
 var addActivityBtn = document.getElementById('add-activity-btn');
-var cancelBtn = document.getElementById('cancel-btn');
-var closeBtn = document.querySelector('#activity-modal .close-btn');
-
-var goalsSection = document.getElementById('goals-section');
-var tipsSection = document.getElementById('tips-section');
-var goalsContainer = document.getElementById('goals-container');
-var tipsContainer = document.getElementById('tips-container');
-
-var addGoalBtn = document.getElementById('add-goal-btn');
-var goalModal = document.getElementById('goal-modal');
-var goalForm = document.getElementById('goal-form');
-var closeGoalBtn = document.getElementById('close-goal-btn');
-var cancelGoalBtn = document.getElementById('cancel-goal-btn');
-
 var activitiesList = document.getElementById('activities-list');
 var totalFootprintEl = document.getElementById('total-footprint');
 var energyUsageEl = document.getElementById('energy-usage');
 var transportDistanceEl = document.getElementById('transport-distance');
-var recommendationsList = document.getElementById('recommendations-list');
 
-var dashboardSection = document.querySelector('.dashboard');
-var recommendationsSection = document.querySelector('.recommendations');
-var navLinks = document.querySelectorAll('nav a');
-var dashboardLink = navLinks[0];
-var insightsLink = document.getElementById('insights-link');
-var goalsLink = document.getElementById('goals-link');
-var tipsLink = document.getElementById('tips-link');
-
+// --- INITIALISATION ---
 function setup() {
+    initMap(); // On lance la carte
     setDefaultDates();
     setupEvents();
-    handleHashNavigation();
-    window.addEventListener('hashchange', handleHashNavigation);
-    
-    // NOUVEAU : Au démarrage, on va chercher les données dans la base !
-    loadActivities();
+    loadActivities(); // On charge les données de Supabase
 }
 
-// ==========================================
-// NOUVELLE FONCTION : LIRE L'HISTORIQUE (GET)
-// ==========================================
+// --- LOGIQUE DE LA CARTE ---
+function initMap() {
+    // Centre la carte sur la Tunisie par défaut
+    map = L.map('map').setView([34.0, 9.0], 6);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Quand on clique sur la carte
+    map.on('click', function(e) {
+        if (markers.length >= 2) {
+            // On nettoie si on a déjà 2 points
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
+        }
+
+        var marker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(map);
+        markers.push(marker);
+
+        if (markers.length === 2) {
+            calculateMapDistance();
+        }
+    });
+}
+
+function calculateMapDistance() {
+    var p1 = markers[0].getLatLng();
+    var p2 = markers[1].getLatLng();
+    
+    // Calcul de distance (en mètres) via Leaflet
+    var distanceInMeters = p1.distanceTo(p2);
+    var distanceInKm = (distanceInMeters / 1000).toFixed(2);
+
+    // On remplit automatiquement le champ "Amount" du formulaire
+    var amountInput = document.getElementById('amount');
+    if (amountInput) {
+        amountInput.value = distanceInKm;
+        // On force le type sur "Transport" pour la cohérence
+        activityType.value = "transport";
+        updateDetailOptions();
+        alert("Distance calculée : " + distanceInKm + " km. Le formulaire a été mis à jour !");
+    }
+}
+
+// --- COMMUNICATIONS BACKEND (FLASK) ---
 function loadActivities() {
-    // Le facteur va au guichet '/api/activities' de Python
     fetch('/api/activities')
     .then(response => response.json())
     .then(data => {
         if (data.status === "success") {
-            // On remplace nos données vides par le carton rempli de Supabase
-            activities = data.data; 
-            // On dessine l'écran avec ces vraies données
-            renderAll(); 
-            console.log("Historique chargé avec succès depuis Supabase !");
-        } else {
-            console.error("Erreur lors du chargement de l'historique:", data.message);
+            activities = data.data;
+            renderAll();
+            console.log("Données chargées depuis Supabase");
         }
     })
-    .catch(error => console.error("Erreur réseau:", error));
+    .catch(err => console.error("Erreur chargement:", err));
 }
 
-// ==========================================
-// FONCTION : AJOUTER UNE ACTIVITÉ (POST)
-// ==========================================
 function addActivity() {
     var type = activityType.value;
     var detail = activityDetail.value;
@@ -106,179 +121,89 @@ function addActivity() {
     .then(response => response.json())
     .then(data => {
         if (data.status === "success") {
-            // Au lieu de bricoler l'affichage, on recharge tout depuis la base de données
-            // pour être sûr d'avoir exactement ce qui est dans Supabase.
-            loadActivities();
+            loadActivities(); // On rafraîchit tout
             closeActivityModal();
-        } else {
-            alert(data.message || "Erreur lors de la sauvegarde.");
+            // On nettoie la carte
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
         }
     })
-    .catch(error => alert("Erreur réseau ou serveur inaccessible."));
+    .catch(err => alert("Erreur lors de l'envoi au serveur."));
 }
 
-function setDefaultDates() {
-    var dateInput = document.getElementById('date');
-    var goalDeadlineInput = document.getElementById('goal-deadline');
-    if (dateInput) dateInput.valueAsDate = new Date();
-    if (goalDeadlineInput) {
-        var nextMonth = new Date();
-        nextMonth.setDate(nextMonth.getDate() + 30);
-        goalDeadlineInput.valueAsDate = nextMonth;
-    }
+// --- RENDU ET AFFICHAGE ---
+function renderAll() {
+    renderActivities();
+    renderSummary();
 }
-
-function setupEvents() {
-    addActivityBtn.addEventListener('click', openActivityModal);
-    cancelBtn.addEventListener('click', closeActivityModal);
-    closeBtn.addEventListener('click', closeActivityModal);
-    activityType.addEventListener('change', updateDetailOptions);
-    activityForm.addEventListener('submit', function (event) {
-        event.preventDefault(); addActivity();
-    });
-    addGoalBtn.addEventListener('click', openGoalModal);
-    closeGoalBtn.addEventListener('click', closeGoalModal);
-    cancelGoalBtn.addEventListener('click', closeGoalModal);
-    goalForm.addEventListener('submit', function (event) {
-        event.preventDefault(); addGoal();
-    });
-    dashboardLink.addEventListener('click', function (e) { e.preventDefault(); window.location.hash = 'dashboard'; showSection('dashboard'); });
-    insightsLink.addEventListener('click', function (e) { e.preventDefault(); window.location.hash = 'insights'; showSection('insights'); });
-    goalsLink.addEventListener('click', function (e) { e.preventDefault(); window.location.hash = 'goals'; showSection('goals'); });
-    tipsLink.addEventListener('click', function (e) { e.preventDefault(); window.location.hash = 'tips'; showSection('tips'); });
-}
-
-function handleHashNavigation() {
-    var hash = (window.location.hash || '#dashboard').replace('#', '');
-    var validSections = { dashboard: true, insights: true, goals: true, tips: true };
-    if (!validSections[hash]) { hash = 'dashboard'; window.location.hash = 'dashboard'; }
-    showSection(hash);
-}
-
-function openActivityModal() { activityModal.style.display = 'flex'; }
-function closeActivityModal() { activityModal.style.display = 'none'; activityForm.reset(); resetDetailOptions(); setDefaultDates(); }
-function openGoalModal() { goalModal.style.display = 'flex'; }
-function closeGoalModal() { goalModal.style.display = 'none'; goalForm.reset(); setDefaultDates(); }
-function resetDetailOptions() { activityDetail.innerHTML = '<option value="">Select specific activity</option>'; }
-
-function updateDetailOptions() {
-    var type = activityType.value;
-    var options = detailsByType[type] || [];
-    resetDetailOptions();
-    for (var i = 0; i < options.length; i++) {
-        var optionValue = options[i];
-        var option = document.createElement('option');
-        option.value = optionValue;
-        option.textContent = makeLabel(optionValue);
-        activityDetail.appendChild(option);
-    }
-}
-
-function makeLabel(text) {
-    var clean = text.replace('_', ' ');
-    return clean.charAt(0).toUpperCase() + clean.slice(1);
-}
-
-function addGoal() {
-    var goalType = document.getElementById('goal-type').value;
-    var target = parseFloat(document.getElementById('goal-target').value);
-    var deadline = document.getElementById('goal-deadline').value;
-    var description = document.getElementById('goal-description').value;
-
-    if (!goalType || isNaN(target) || !deadline || !description) return;
-
-    var goal = { id: Date.now(), type: goalType, target: target, deadline: deadline, description: description };
-    goals.push(goal);
-    localStorage.setItem('ecoGoalsBasic', JSON.stringify(goals));
-    renderGoals();
-    closeGoalModal();
-}
-
-function showSection(sectionName) {
-    for (var i = 0; i < navLinks.length; i++) navLinks[i].classList.remove('active');
-    dashboardSection.style.display = 'none';
-    recommendationsSection.style.display = 'none';
-    goalsSection.style.display = 'none';
-    tipsSection.style.display = 'none';
-
-    if (sectionName === 'dashboard') { dashboardSection.style.display = 'flex'; recommendationsSection.style.display = 'block'; dashboardLink.classList.add('active'); }
-    if (sectionName === 'insights') { dashboardSection.style.display = 'flex'; recommendationsSection.style.display = 'block'; insightsLink.classList.add('active'); }
-    if (sectionName === 'goals') { goalsSection.style.display = 'block'; goalsLink.classList.add('active'); }
-    if (sectionName === 'tips') { tipsSection.style.display = 'block'; tipsLink.classList.add('active'); }
-}
-
-function renderAll() { renderActivities(); renderSummary(); renderRecommendations(); renderGoals(); renderTips(); }
 
 function renderActivities() {
     activitiesList.innerHTML = '';
-    if (activities.length === 0) {
-        activitiesList.innerHTML = '<p>No activities yet. Click + to add one.</p>';
-        return;
-    }
-    for (var i = 0; i < activities.length; i++) {
-        var activity = activities[i];
+    activities.forEach(activity => {
         var item = document.createElement('div');
         item.className = 'activity-item';
-
-        var dateSpan = document.createElement('span');
-        dateSpan.className = 'activity-date';
-        dateSpan.textContent = formatDate(activity.date);
-
-        var detailSpan = document.createElement('span');
-        detailSpan.className = 'activity-detail';
-        detailSpan.textContent = activity.type + ' - ' + activity.detail;
-
-        var amountSpan = document.createElement('span');
-        amountSpan.className = 'activity-amount';
-        amountSpan.textContent = activity.amount.toFixed(2) + ' ' + (units[activity.type] || '');
-
-        var emissionSpan = document.createElement('span');
-        emissionSpan.className = 'activity-emission';
-        emissionSpan.textContent = activity.emission.toFixed(2) + ' kg CO2';
-
-        item.appendChild(dateSpan); item.appendChild(detailSpan); item.appendChild(amountSpan); item.appendChild(emissionSpan);
+        item.innerHTML = `
+            <span class="activity-date">${formatDate(activity.date)}</span>
+            <span class="activity-detail">${activity.type} - ${activity.detail}</span>
+            <span class="activity-amount">${activity.amount} ${units[activity.type] || ''}</span>
+            <span class="activity-emission">${activity.emission.toFixed(2)} kg CO2</span>
+        `;
         activitiesList.appendChild(item);
-    }
+    });
 }
 
 function renderSummary() {
-    var totalEmission = 0; var totalEnergy = 0; var totalTransport = 0;
-    for (var i = 0; i < activities.length; i++) {
-        totalEmission += activities[i].emission;
-        if (activities[i].type === 'energy') totalEnergy += activities[i].amount;
-        if (activities[i].type === 'transport') totalTransport += activities[i].amount;
-    }
-    totalFootprintEl.textContent = totalEmission.toFixed(2) + ' kg CO2';
-    energyUsageEl.textContent = totalEnergy.toFixed(2) + ' kWh';
-    transportDistanceEl.textContent = totalTransport.toFixed(2) + ' km';
+    var total = 0, energy = 0, transport = 0;
+    activities.forEach(a => {
+        total += a.emission;
+        if (a.type === 'energy') energy += a.amount;
+        if (a.type === 'transport') transport += a.amount;
+    });
+    totalFootprintEl.textContent = total.toFixed(2) + ' kg CO2';
+    energyUsageEl.textContent = energy.toFixed(2) + ' kWh';
+    transportDistanceEl.textContent = transport.toFixed(2) + ' km';
 }
 
-function renderRecommendations() {
-    recommendationsList.innerHTML = '<p>Simple ways to reduce your footprint:</p><ul><li>Use bus, train, bike, or walk when possible.</li><li>Turn off lights and devices when not in use.</li><li>Eat less high-emission food like beef.</li></ul>';
+// --- UTILS & EVENTS ---
+function setupEvents() {
+    addActivityBtn.addEventListener('click', () => activityModal.style.display = 'flex');
+    document.getElementById('cancel-btn').addEventListener('click', closeActivityModal);
+    activityType.addEventListener('change', updateDetailOptions);
+    activityForm.addEventListener('submit', (e) => { e.preventDefault(); addActivity(); });
+    
+    // Navigation simple
+    document.querySelectorAll('nav a').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const section = e.target.getAttribute('id').replace('-link', '');
+            // Ici tu peux ajouter la logique pour cacher/montrer les sections
+            console.log("Navigué vers :", section);
+        });
+    });
 }
 
-function renderGoals() {
-    goalsContainer.innerHTML = '';
-    if (goals.length === 0) { goalsContainer.innerHTML = '<p>No goals yet. Add your first goal.</p>'; return; }
-    for (var i = 0; i < goals.length; i++) {
-        var goal = goals[i];
-        var block = document.createElement('div');
-        block.className = 'goal-item';
-        block.innerHTML = '<h3>' + goal.description + '</h3><p>Type: ' + makeLabel(goal.type) + '</p><p>Target: ' + goal.target + ' kg CO2</p><p>Deadline: ' + goal.deadline + '</p>';
-        goalsContainer.appendChild(block);
-    }
+function updateDetailOptions() {
+    var options = detailsByType[activityType.value] || [];
+    activityDetail.innerHTML = '<option value="">Select detail</option>';
+    options.forEach(opt => {
+        var o = document.createElement('option');
+        o.value = opt;
+        o.textContent = opt.charAt(0).toUpperCase() + opt.slice(1);
+        activityDetail.appendChild(o);
+    });
 }
 
-function renderTips() {
-    tipsContainer.innerHTML = '<p>Basic eco-friendly tips:</p><ul><li>Carry a reusable bottle and bag.</li><li>Buy only what you need.</li><li>Unplug chargers when not using them.</li></ul>';
+function closeActivityModal() {
+    activityModal.style.display = 'none';
+    activityForm.reset();
 }
 
-function formatDate(value) {
-    var d = new Date(value); var today = new Date(); var yesterday = new Date();
-    yesterday.setDate(today.getDate() - 1);
-    if (d.toDateString() === today.toDateString()) return 'Today';
-    if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
-    return d.toLocaleDateString();
+function setDefaultDates() {
+    document.getElementById('date').valueAsDate = new Date();
+}
+
+function formatDate(v) {
+    return new Date(v).toLocaleDateString();
 }
 
 setup();
