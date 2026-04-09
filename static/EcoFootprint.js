@@ -1,31 +1,11 @@
 var emissionFactors = {
-    car: 0.24,
-    bus: 0.1,
-    train: 0.06,
-    bicycle: 0,
-    motorcycle: 0.12,
-    electricity: 0.52,
-    natural_gas: 2.0,
-    heating_oil: 2.68,
-    beef: 31.0,
-    lamb: 24.0,
-    chicken: 6.0,
-    pork: 7.0,
-    fish: 5.0,
-    cheese: 13.5,
-    clothing: 15.0,
-    electronics: 50.0,
-    furniture: 30.0,
-    plastic: 6.0
+    car: 0.24, bus: 0.1, train: 0.06, bicycle: 0, motorcycle: 0.12,
+    electricity: 0.52, natural_gas: 2.0, heating_oil: 2.68,
+    beef: 31.0, lamb: 24.0, chicken: 6.0, pork: 7.0, fish: 5.0, cheese: 13.5,
+    clothing: 15.0, electronics: 50.0, furniture: 30.0, plastic: 6.0
 };
 
-var units = {
-    transport: 'km',
-    energy: 'kWh',
-    food: 'kg',
-    shopping: 'units'
-};
-
+var units = { transport: 'km', energy: 'kWh', food: 'kg', shopping: 'units' };
 var detailsByType = {
     transport: ['car', 'bus', 'train', 'bicycle', 'motorcycle'],
     energy: ['electricity', 'natural_gas', 'heating_oil'],
@@ -33,7 +13,7 @@ var detailsByType = {
     shopping: ['clothing', 'electronics', 'furniture', 'plastic']
 };
 
-var activities = JSON.parse(localStorage.getItem('ecoActivitiesBasic')) || [];
+var activities = []; // On commence avec un tableau vide, on va le remplir avec Supabase
 var goals = JSON.parse(localStorage.getItem('ecoGoalsBasic')) || [];
 
 var activityModal = document.getElementById('activity-modal');
@@ -72,19 +52,75 @@ var tipsLink = document.getElementById('tips-link');
 function setup() {
     setDefaultDates();
     setupEvents();
-    renderAll();
     handleHashNavigation();
     window.addEventListener('hashchange', handleHashNavigation);
+    
+    // NOUVEAU : Au démarrage, on va chercher les données dans la base !
+    loadActivities();
+}
+
+// ==========================================
+// NOUVELLE FONCTION : LIRE L'HISTORIQUE (GET)
+// ==========================================
+function loadActivities() {
+    // Le facteur va au guichet '/api/activities' de Python
+    fetch('/api/activities')
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === "success") {
+            // On remplace nos données vides par le carton rempli de Supabase
+            activities = data.data; 
+            // On dessine l'écran avec ces vraies données
+            renderAll(); 
+            console.log("Historique chargé avec succès depuis Supabase !");
+        } else {
+            console.error("Erreur lors du chargement de l'historique:", data.message);
+        }
+    })
+    .catch(error => console.error("Erreur réseau:", error));
+}
+
+// ==========================================
+// FONCTION : AJOUTER UNE ACTIVITÉ (POST)
+// ==========================================
+function addActivity() {
+    var type = activityType.value;
+    var detail = activityDetail.value;
+    var amount = parseFloat(document.getElementById('amount').value);
+    var date = document.getElementById('date').value;
+
+    if (!type || !detail || isNaN(amount) || !date) return;
+
+    var factor = emissionFactors[detail] || 0;
+    var emission = amount * factor;
+
+    var activityData = {
+        type: type, detail: detail, amount: amount, date: date, emission: emission
+    };
+
+    fetch('/api/add-activity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(activityData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === "success") {
+            // Au lieu de bricoler l'affichage, on recharge tout depuis la base de données
+            // pour être sûr d'avoir exactement ce qui est dans Supabase.
+            loadActivities();
+            closeActivityModal();
+        } else {
+            alert(data.message || "Erreur lors de la sauvegarde.");
+        }
+    })
+    .catch(error => alert("Erreur réseau ou serveur inaccessible."));
 }
 
 function setDefaultDates() {
     var dateInput = document.getElementById('date');
     var goalDeadlineInput = document.getElementById('goal-deadline');
-
-    if (dateInput) {
-        dateInput.valueAsDate = new Date();
-    }
-
+    if (dateInput) dateInput.valueAsDate = new Date();
     if (goalDeadlineInput) {
         var nextMonth = new Date();
         nextMonth.setDate(nextMonth.getDate() + 30);
@@ -96,96 +132,39 @@ function setupEvents() {
     addActivityBtn.addEventListener('click', openActivityModal);
     cancelBtn.addEventListener('click', closeActivityModal);
     closeBtn.addEventListener('click', closeActivityModal);
-
     activityType.addEventListener('change', updateDetailOptions);
-
     activityForm.addEventListener('submit', function (event) {
-        event.preventDefault();
-        addActivity();
+        event.preventDefault(); addActivity();
     });
-
     addGoalBtn.addEventListener('click', openGoalModal);
     closeGoalBtn.addEventListener('click', closeGoalModal);
     cancelGoalBtn.addEventListener('click', closeGoalModal);
-
     goalForm.addEventListener('submit', function (event) {
-        event.preventDefault();
-        addGoal();
+        event.preventDefault(); addGoal();
     });
-
-    dashboardLink.addEventListener('click', function (event) {
-        event.preventDefault();
-        window.location.hash = 'dashboard';
-        showSection('dashboard');
-    });
-
-    insightsLink.addEventListener('click', function (event) {
-        event.preventDefault();
-        window.location.hash = 'insights';
-        showSection('insights');
-    });
-
-    goalsLink.addEventListener('click', function (event) {
-        event.preventDefault();
-        window.location.hash = 'goals';
-        showSection('goals');
-    });
-
-    tipsLink.addEventListener('click', function (event) {
-        event.preventDefault();
-        window.location.hash = 'tips';
-        showSection('tips');
-    });
+    dashboardLink.addEventListener('click', function (e) { e.preventDefault(); window.location.hash = 'dashboard'; showSection('dashboard'); });
+    insightsLink.addEventListener('click', function (e) { e.preventDefault(); window.location.hash = 'insights'; showSection('insights'); });
+    goalsLink.addEventListener('click', function (e) { e.preventDefault(); window.location.hash = 'goals'; showSection('goals'); });
+    tipsLink.addEventListener('click', function (e) { e.preventDefault(); window.location.hash = 'tips'; showSection('tips'); });
 }
 
 function handleHashNavigation() {
     var hash = (window.location.hash || '#dashboard').replace('#', '');
-    var validSections = {
-        dashboard: true,
-        insights: true,
-        goals: true,
-        tips: true
-    };
-
-    if (!validSections[hash]) {
-        hash = 'dashboard';
-        window.location.hash = 'dashboard';
-    }
-
+    var validSections = { dashboard: true, insights: true, goals: true, tips: true };
+    if (!validSections[hash]) { hash = 'dashboard'; window.location.hash = 'dashboard'; }
     showSection(hash);
 }
 
-function openActivityModal() {
-    activityModal.style.display = 'flex';
-}
-
-function closeActivityModal() {
-    activityModal.style.display = 'none';
-    activityForm.reset();
-    resetDetailOptions();
-    setDefaultDates();
-}
-
-function openGoalModal() {
-    goalModal.style.display = 'flex';
-}
-
-function closeGoalModal() {
-    goalModal.style.display = 'none';
-    goalForm.reset();
-    setDefaultDates();
-}
-
-function resetDetailOptions() {
-    activityDetail.innerHTML = '<option value="">Select specific activity</option>';
-}
+function openActivityModal() { activityModal.style.display = 'flex'; }
+function closeActivityModal() { activityModal.style.display = 'none'; activityForm.reset(); resetDetailOptions(); setDefaultDates(); }
+function openGoalModal() { goalModal.style.display = 'flex'; }
+function closeGoalModal() { goalModal.style.display = 'none'; goalForm.reset(); setDefaultDates(); }
+function resetDetailOptions() { activityDetail.innerHTML = '<option value="">Select specific activity</option>'; }
 
 function updateDetailOptions() {
     var type = activityType.value;
     var options = detailsByType[type] || [];
-
     resetDetailOptions();
-
     for (var i = 0; i < options.length; i++) {
         var optionValue = options[i];
         var option = document.createElement('option');
@@ -200,138 +179,42 @@ function makeLabel(text) {
     return clean.charAt(0).toUpperCase() + clean.slice(1);
 }
 
-// ==========================================
-// NOUVELLE FONCTION CONNECTÉE À FLASK
-// ==========================================
-function addActivity() {
-    var type = activityType.value;
-    var detail = activityDetail.value;
-    var amount = parseFloat(document.getElementById('amount').value);
-    var date = document.getElementById('date').value;
-
-    if (!type || !detail || isNaN(amount) || !date) {
-        return;
-    }
-
-    var factor = emissionFactors[detail] || 0;
-    var emission = amount * factor;
-
-    // 1. Préparation des données
-    var activityData = {
-        type: type,
-        detail: detail,
-        amount: amount,
-        date: date,
-        emission: emission
-    };
-
-    // 2. Envoi au serveur Flask via API
-    fetch('/api/add-activity', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(activityData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === "success") {
-            // Mise à jour visuelle
-            activityData.id = Date.now(); 
-            activities.unshift(activityData);
-            
-            // Sauvegarde locale temporaire
-            localStorage.setItem('ecoActivitiesBasic', JSON.stringify(activities));
-            
-            renderAll();
-            closeActivityModal();
-        } else {
-            alert(data.message || "Erreur lors de la sauvegarde.");
-            console.error(data.message);
-        }
-    })
-    .catch(error => {
-        console.error("Erreur réseau:", error);
-        alert("Erreur reseau ou serveur Flask inaccessible. Verifie que le backend tourne bien.");
-    });
-}
-
 function addGoal() {
     var goalType = document.getElementById('goal-type').value;
     var target = parseFloat(document.getElementById('goal-target').value);
     var deadline = document.getElementById('goal-deadline').value;
     var description = document.getElementById('goal-description').value;
 
-    if (!goalType || isNaN(target) || !deadline || !description) {
-        return;
-    }
+    if (!goalType || isNaN(target) || !deadline || !description) return;
 
-    var goal = {
-        id: Date.now(),
-        type: goalType,
-        target: target,
-        deadline: deadline,
-        description: description
-    };
-
+    var goal = { id: Date.now(), type: goalType, target: target, deadline: deadline, description: description };
     goals.push(goal);
     localStorage.setItem('ecoGoalsBasic', JSON.stringify(goals));
-
     renderGoals();
     closeGoalModal();
 }
 
 function showSection(sectionName) {
-    var i;
-
-    for (i = 0; i < navLinks.length; i++) {
-        navLinks[i].classList.remove('active');
-    }
-
+    for (var i = 0; i < navLinks.length; i++) navLinks[i].classList.remove('active');
     dashboardSection.style.display = 'none';
     recommendationsSection.style.display = 'none';
     goalsSection.style.display = 'none';
     tipsSection.style.display = 'none';
 
-    if (sectionName === 'dashboard') {
-        dashboardSection.style.display = 'flex';
-        recommendationsSection.style.display = 'block';
-        dashboardLink.classList.add('active');
-    }
-
-    if (sectionName === 'insights') {
-        dashboardSection.style.display = 'flex';
-        recommendationsSection.style.display = 'block';
-        insightsLink.classList.add('active');
-    }
-
-    if (sectionName === 'goals') {
-        goalsSection.style.display = 'block';
-        goalsLink.classList.add('active');
-    }
-
-    if (sectionName === 'tips') {
-        tipsSection.style.display = 'block';
-        tipsLink.classList.add('active');
-    }
+    if (sectionName === 'dashboard') { dashboardSection.style.display = 'flex'; recommendationsSection.style.display = 'block'; dashboardLink.classList.add('active'); }
+    if (sectionName === 'insights') { dashboardSection.style.display = 'flex'; recommendationsSection.style.display = 'block'; insightsLink.classList.add('active'); }
+    if (sectionName === 'goals') { goalsSection.style.display = 'block'; goalsLink.classList.add('active'); }
+    if (sectionName === 'tips') { tipsSection.style.display = 'block'; tipsLink.classList.add('active'); }
 }
 
-function renderAll() {
-    renderActivities();
-    renderSummary();
-    renderRecommendations();
-    renderGoals();
-    renderTips();
-}
+function renderAll() { renderActivities(); renderSummary(); renderRecommendations(); renderGoals(); renderTips(); }
 
 function renderActivities() {
     activitiesList.innerHTML = '';
-
     if (activities.length === 0) {
         activitiesList.innerHTML = '<p>No activities yet. Click + to add one.</p>';
         return;
     }
-
     for (var i = 0; i < activities.length; i++) {
         var activity = activities[i];
         var item = document.createElement('div');
@@ -353,102 +236,48 @@ function renderActivities() {
         emissionSpan.className = 'activity-emission';
         emissionSpan.textContent = activity.emission.toFixed(2) + ' kg CO2';
 
-        item.appendChild(dateSpan);
-        item.appendChild(detailSpan);
-        item.appendChild(amountSpan);
-        item.appendChild(emissionSpan);
-
+        item.appendChild(dateSpan); item.appendChild(detailSpan); item.appendChild(amountSpan); item.appendChild(emissionSpan);
         activitiesList.appendChild(item);
     }
 }
 
 function renderSummary() {
-    var totalEmission = 0;
-    var totalEnergy = 0;
-    var totalTransport = 0;
-
+    var totalEmission = 0; var totalEnergy = 0; var totalTransport = 0;
     for (var i = 0; i < activities.length; i++) {
         totalEmission += activities[i].emission;
-
-        if (activities[i].type === 'energy') {
-            totalEnergy += activities[i].amount;
-        }
-
-        if (activities[i].type === 'transport') {
-            totalTransport += activities[i].amount;
-        }
+        if (activities[i].type === 'energy') totalEnergy += activities[i].amount;
+        if (activities[i].type === 'transport') totalTransport += activities[i].amount;
     }
-
     totalFootprintEl.textContent = totalEmission.toFixed(2) + ' kg CO2';
     energyUsageEl.textContent = totalEnergy.toFixed(2) + ' kWh';
     transportDistanceEl.textContent = totalTransport.toFixed(2) + ' km';
 }
 
 function renderRecommendations() {
-    recommendationsList.innerHTML = '';
-
-    var html = '';
-    html += '<p>Simple ways to reduce your footprint:</p>';
-    html += '<ul>';
-    html += '<li>Use bus, train, bike, or walk when possible.</li>';
-    html += '<li>Turn off lights and devices when not in use.</li>';
-    html += '<li>Eat less high-emission food like beef.</li>';
-    html += '</ul>';
-
-    recommendationsList.innerHTML = html;
+    recommendationsList.innerHTML = '<p>Simple ways to reduce your footprint:</p><ul><li>Use bus, train, bike, or walk when possible.</li><li>Turn off lights and devices when not in use.</li><li>Eat less high-emission food like beef.</li></ul>';
 }
 
 function renderGoals() {
     goalsContainer.innerHTML = '';
-
-    if (goals.length === 0) {
-        goalsContainer.innerHTML = '<p>No goals yet. Add your first goal.</p>';
-        return;
-    }
-
+    if (goals.length === 0) { goalsContainer.innerHTML = '<p>No goals yet. Add your first goal.</p>'; return; }
     for (var i = 0; i < goals.length; i++) {
         var goal = goals[i];
         var block = document.createElement('div');
         block.className = 'goal-item';
-
-        block.innerHTML =
-            '<h3>' + goal.description + '</h3>' +
-            '<p>Type: ' + makeLabel(goal.type) + '</p>' +
-            '<p>Target: ' + goal.target + ' kg CO2</p>' +
-            '<p>Deadline: ' + goal.deadline + '</p>';
-
+        block.innerHTML = '<h3>' + goal.description + '</h3><p>Type: ' + makeLabel(goal.type) + '</p><p>Target: ' + goal.target + ' kg CO2</p><p>Deadline: ' + goal.deadline + '</p>';
         goalsContainer.appendChild(block);
     }
 }
 
 function renderTips() {
-    tipsContainer.innerHTML = '';
-
-    var html = '';
-    html += '<p>Basic eco-friendly tips:</p>';
-    html += '<ul>';
-    html += '<li>Carry a reusable bottle and bag.</li>';
-    html += '<li>Buy only what you need.</li>';
-    html += '<li>Unplug chargers when not using them.</li>';
-    html += '</ul>';
-
-    tipsContainer.innerHTML = html;
+    tipsContainer.innerHTML = '<p>Basic eco-friendly tips:</p><ul><li>Carry a reusable bottle and bag.</li><li>Buy only what you need.</li><li>Unplug chargers when not using them.</li></ul>';
 }
 
 function formatDate(value) {
-    var d = new Date(value);
-    var today = new Date();
-    var yesterday = new Date();
+    var d = new Date(value); var today = new Date(); var yesterday = new Date();
     yesterday.setDate(today.getDate() - 1);
-
-    if (d.toDateString() === today.toDateString()) {
-        return 'Today';
-    }
-
-    if (d.toDateString() === yesterday.toDateString()) {
-        return 'Yesterday';
-    }
-
+    if (d.toDateString() === today.toDateString()) return 'Today';
+    if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
     return d.toLocaleDateString();
 }
 

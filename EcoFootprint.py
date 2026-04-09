@@ -57,6 +57,28 @@ def add_activity():
             "message": error_message
         }), 400
 
+# ==========================================
+# NOUVELLE ROUTE : LIRE L'HISTORIQUE (GET)
+# ==========================================
+@app.route('/api/activities', methods=['GET'])
+def get_activities():
+    try:
+        if supabase is None:
+            return jsonify({"status": "error", "message": "Supabase non configuré"}), 500
+
+        # On demande à Supabase de sélectionner toutes les lignes
+        # et de les trier par date de création (les plus récentes en premier)
+        response = supabase.table('activities').select('*').order('created_at', desc=True).execute()
+        
+        # On renvoie l'historique au site web
+        return jsonify({
+            "status": "success", 
+            "data": response.data
+        }), 200
+        
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+
 
 if __name__ == '__main__':
     # Run Flask app in development mode.
